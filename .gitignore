@@ -1,0 +1,8 @@
+# build output
+build/
+
+# VS code clutter
+.vscode
+
+# output files
+out/
