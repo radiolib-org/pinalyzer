@@ -67,6 +67,7 @@ static struct args_t {
   struct arg_int* pins;
   struct arg_dbl* capture_len;
   struct arg_str* trig_type;
+  struct arg_str* labels;
   struct arg_lit* help;
   struct arg_end* end;
 } args;
@@ -161,9 +162,14 @@ static int run() {
   // write the header
   fprintf(fptr, "Time");
   for(unsigned int i = 0; i < conf.num_pins; i++) {
-    fprintf(fptr, ",BCM%d", conf.pins[i]);
+    // use the labels, if provided
+    if((unsigned int)args.labels->count >= (i + 1)) {
+      fprintf(fptr, ",%s", args.labels->sval[i]);
+    } else {
+      fprintf(fptr, ",BCM%d", conf.pins[i]);
+    }
   }
-  fprintf(fptr, "\n;PulseView format spec: t,%dl\n", conf.num_pins);
+  fprintf(fptr, "\n;PulseView format spec: t,%db\n", conf.num_pins);
 
   // get start of capture as pulse view needs time in seconds
   start = samples[0].timestamp;
@@ -179,7 +185,8 @@ static int run() {
   // close the file and we're done
   fclose(fptr);
   fprintf(stdout, "%lu samples saved to %s\n", num_samples, filename);
-  fprintf(stdout, "PulseView format spec: t,%dl\n", conf.num_pins);
+  fprintf(stdout, "Average sampling rate is %.3f Msps\n", ((double)num_samples/((double)conf.capture_len/(double)NSEC_TO_SEC))/1000.0);
+  fprintf(stdout, "PulseView format spec: t,%db\n", conf.num_pins);
 
   return(0);
 }
@@ -189,6 +196,7 @@ int main(int argc, char** argv) {
     args.pins = arg_intn("p", "pins", NULL, 1, PINS_MAX, "BCMx pins to capture, maximum of " STR(PINS_MAX) ". The first pin will be used as trigger source."),
     args.capture_len = arg_dbl0("l", "capture_len", "sec", "Capture length, defaults to 1.0 second"),
     args.trig_type = arg_str0("t", "trigger", NULL, "Trigger type: r/rising, f/falling, a/any, i/immediate, defaults to rising"),
+    args.labels = arg_strn("n", "names", NULL, 1, PINS_MAX, "Signal names for albelling the output, in the order provided pin numbers"),
     args.help = arg_lit0(NULL, "help", "Display this help and exit"),
     args.end = arg_end(3),
   };
@@ -205,7 +213,6 @@ int main(int argc, char** argv) {
     fprintf(stdout, "RPi GPIO logic analyzer, gitrev " GITREV "\n");
     fprintf(stdout, "Usage: %s", argv[0]);
     arg_print_syntax(stdout, argtable, "\n");
-    fprintf(stdout, "After start, send SIGINT /Ctrl+C/ to stop\n");
     arg_print_glossary(stdout, argtable,"  %-25s %s\n");
     exitcode = 0;
     goto exit;
