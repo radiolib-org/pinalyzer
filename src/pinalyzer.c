@@ -185,7 +185,7 @@ static int run() {
   // close the file and we're done
   fclose(fptr);
   fprintf(stdout, "%lu samples saved to %s\n", num_samples, filename);
-  fprintf(stdout, "Average sampling rate is %.3f Msps\n", ((double)num_samples/((double)conf.capture_len/(double)NSEC_TO_SEC))/1000.0);
+  fprintf(stdout, "Average sampling rate is %.3f Msps\n", ((double)num_samples/((double)conf.capture_len/(double)NSEC_TO_SEC))/1000000.0);
   fprintf(stdout, "PulseView format spec: t,%db\n", conf.num_pins);
 
   return(0);
