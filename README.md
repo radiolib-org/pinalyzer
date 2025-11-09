@@ -1,9 +1,10 @@
 # pinalyzer
-Raspberry Pi-based logic analyzer. Supports capturing up to 32 GPIO pins and triggering on rising/falling/any edge.
+Raspberry Pi-based logic analyzer. Supports capturing up to 32 GPIO pins and triggering on rising/falling/any edge. Compatible with sigrok file format.
 
 ## Dependencies
 
 * cmake >= 3.18
+* libzip (can be installed by `sudo apt install libzip-dev`)
 
 ## Building
 
@@ -13,9 +14,9 @@ Simply call the `build.sh` script.
 
 Start the program by calling `./build/pinalyzer`. Check the helptext `./build/pinalyzer --help` for all options. At least one pin is required to perform the capture. After starting, the program will wait for the specified trigger on the first pin defined by the `-p` argument, and then capture the state of the specified pins. Multiple pins may be specified, the pin number is the BCM pin number.
 
-Output is a CSV file, first column is time since capture in seconds, the following columns are logic states. The output file can then be loaded into [sigrok PulseView](https://sigrok.org/wiki/PulseView). To open the file, go to Open -> Import Comma-separated values, and enter the format specifier returned at the end of the pinalyzer capture run. 
+Output is a .sr file compatible with [sigrok PulseView](https://sigrok.org/wiki/PulseView). It is also possible to save output as CSV file by using the optional argument `-c`, first column is time since capture in seconds, the following columns are logic states. However, the resulting files will be very large, so this is not recommended.
 
-An example call to capture SPI traffic on the [RadioHAT](https://github.com/radiolib-org/RadioHAT) to trigger on falling edge of NSS0 and capture 1 second of data, with pins labeled with SPI signal names (using sigrok PulseView SPI names):
+An example call to capture SPI traffic on the [RadioHAT](https://github.com/radiolib-org/RadioHAT) to trigger on falling edge of NSS0 and capture 1 second of data, with pins labeled with SPI signal names (using sigrok PulseView SPI names) and output to sigrok PulseView session file:
 
 ```
 ./build/pinalyzer -tf -p4 -p17 -p27 -p22 -nCS#0 -nCLK -nMISO -nMOSI
