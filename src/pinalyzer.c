@@ -109,10 +109,7 @@ static inline double u64_to_dbl(uint64_t nsec) {
   return(timestamp);
 }
 
-static int run() {
-  struct timespec ts;
-
-  fprintf(stdout, "Waiting for trigger\n");
+static void wait_for_trigger() {
   int curr;
   int prev = digitalReadSingle(conf.pins[0]);
   bool triggered = false;
@@ -134,8 +131,10 @@ static int run() {
     }
     prev = curr;
   }
+}
 
-  fprintf(stdout, "Running capture\n");
+static size_t capture() {
+  struct timespec ts;
   size_t num_samples = 0;
   timespec_get(&ts, TIME_UTC);
   uint64_t start = timespec_to_u64(ts);
@@ -151,10 +150,11 @@ static int run() {
 
   } while(samples[num_samples++].timestamp < conf.capture_len);
   num_samples--;
-  fprintf(stdout, "Capture done after %.9f seconds, saving to file\n", u64_to_dbl(samples[num_samples].timestamp));
+  return(num_samples);
+}
 
-  // create and open the file
-  char filename[64];
+static void save(size_t num_samples, char* filename) {
+  struct timespec ts;
   timespec_get(&ts, TIME_UTC);
   sprintf(filename, "out/pinalyzer_%lu.csv", ts.tv_sec);
   FILE *fptr = fopen(filename, "w");
@@ -171,10 +171,8 @@ static int run() {
   }
   fprintf(fptr, "\n;PulseView format spec: t,%db\n", conf.num_pins);
 
-  // get start of capture as pulse view needs time in seconds
-  start = samples[0].timestamp;
+  // write the timestamp and samples
   for(size_t i = 0; i < num_samples; i++) {
-    // write the timestamp and samples
     fprintf(fptr, "%.9f", u64_to_dbl(samples[i].timestamp));
     for(unsigned int j = 0; j < conf.num_pins; j++) {
       fprintf(fptr, ",%d", (samples[i].val & (1UL << conf.pins[j])) != 0);
@@ -184,6 +182,19 @@ static int run() {
 
   // close the file and we're done
   fclose(fptr);
+}
+
+static int run() {
+  fprintf(stdout, "Waiting for trigger\n");
+  wait_for_trigger();
+
+  fprintf(stdout, "Running capture\n");
+  size_t num_samples = capture();
+
+  fprintf(stdout, "Capture done after %.9f seconds, saving to file\n", u64_to_dbl(samples[num_samples].timestamp));
+  char filename[64];
+  save(num_samples, filename);
+
   fprintf(stdout, "%lu samples saved to %s\n", num_samples, filename);
   fprintf(stdout, "Average sampling rate is %.3f Msps\n", ((double)num_samples/((double)conf.capture_len/(double)NSEC_TO_SEC))/1000000.0);
   fprintf(stdout, "PulseView format spec: t,%db\n", conf.num_pins);
