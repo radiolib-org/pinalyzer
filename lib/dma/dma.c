@@ -97,7 +97,7 @@ static DMAMemHandle *dma_malloc(unsigned int size) {
 
   assert(mem->bus_addr != 0);
 
-  fprintf(stderr, "MBox alloc: %d bytes, bus: %08X, virt: %08X\n", mem->size, mem->bus_addr, mem->virtual_addr);
+  fprintf(stderr, "MBox alloc: %d bytes, bus: %08X, virt: %08X\n", mem->size, mem->bus_addr, (int)mem->virtual_addr);
 
   return (mem);
 }
@@ -173,7 +173,7 @@ static void dma_init_cbs(bool delay) {
     }
   }
 
-  fprintf(stderr, "DMA init: %d control blocks, %d samples\n", dma_conf.num_cbs, dma_conf.num_samples);
+  fprintf(stderr, "DMA init: %lu control blocks, %lu samples\n", dma_conf.num_cbs, dma_conf.num_samples);
 }
 
 static void init_hw_clk(int div) {
